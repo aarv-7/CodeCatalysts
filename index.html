@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>SubSage — Subscription Tracker</title>
-  <link rel="stylesheet" href="style.css" />
+  
 </head>
 <body>
   <header>
@@ -35,3 +35,36 @@
         <button type="submit">Add Subscription</button>
       </form>
     </section>
+    <section class="card" id="dashboard">
+      <h2>Dashboard</h2>
+      <p>Total monthly cost: <strong id="total-monthly">₹0</strong></p>
+      <p>Total yearly cost: <strong id="total-yearly">₹0</strong></p>
+      <p>Health score: <strong id="health-score">0%</strong></p>
+      <div class="gauge-wrap">
+        <div class="gauge-bar" id="gauge-bar"></div>
+      </div>
+    </section>
+    <section class="card insights" id="insights">
+      <h2>Insights</h2>
+      <p id="leakage-msg">You are wasting ₹0/month on low-value subscriptions.</p>
+    </section>
+    <section class="card" id="future-gain">
+      <h2>Future gain</h2>
+      <p>
+        If you invest your monthly waste at <strong>10% yearly</strong> for <strong>5 years</strong>:
+      </p>
+      <p class="big-number" id="future-amount">₹0</p>
+    </section>
+    <section class="card" id="list-section">
+      <h2>Your subscriptions</h2>
+      <p class="hint">Uncheck a row to exclude it from all calculations (what-if).</p>
+      <ul id="sub-list"></ul>
+      <div id="empty-msg">No subscriptions yet. Add one above.</div>
+    </section>
+    <section class="card" id="suggestions">
+      <h2>Smart cancel suggestions</h2>
+      <ul id="cancel-list"></ul>
+      <p id="cancel-empty" class="muted">Nothing to suggest — great job using what you pay for.</p>
+    </section>
+</body>
+</html>
