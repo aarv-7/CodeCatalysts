@@ -511,6 +511,17 @@ function usageLabel(usage) {
   return "Not Used";
 }
 
+/** Short insight line per subscription (shown on each card) */
+function usageInsightLine(usage) {
+  if (usage === "low") {
+    return "Consider cancelling — you're paying for no usage";
+  }
+  if (usage === "medium") {
+    return "Low usage — evaluate if it's worth the cost";
+  }
+  return "Good value — actively used";
+}
+
 /**
  * Subscription Health %: usage 3/2/1 averaged → 0–100, shown as "NN%".
  * Feedback + 🎯 target line + ✅ when waste ≤ ₹200/mo.
@@ -625,7 +636,12 @@ function renderList() {
     row.appendChild(pill);
     row.appendChild(actions);
 
+    const insight = document.createElement("p");
+    insight.className = "sub-card__insight sub-card__insight--" + s.usage;
+    insight.textContent = usageInsightLine(s.usage);
+
     card.appendChild(row);
+    card.appendChild(insight);
     subListRight.appendChild(card);
   });
 
