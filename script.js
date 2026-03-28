@@ -1,9 +1,8 @@
 const subscriptions = [];
 
-const ANNUAL_RATE = 0.1; // 10% per year
+const ANNUAL_RATE = 0.1;
 const YEARS = 5;
 
-// DOM elements
 const form = document.getElementById("sub-form");
 const subListRight = document.getElementById("sub-list-right");
 const emptyMsgRight = document.getElementById("empty-msg-right");
@@ -12,6 +11,7 @@ const editForm = document.getElementById("edit-form");
 const editName = document.getElementById("edit-name");
 const editCost = document.getElementById("edit-cost");
 const editUsage = document.getElementById("edit-usage");
+const editCategory = document.getElementById("edit-category");
 const editCancel = document.getElementById("edit-cancel");
 const totalMonthlyEl = document.getElementById("total-monthly");
 const totalYearlyEl = document.getElementById("total-yearly");
@@ -26,19 +26,16 @@ const themeToggle = document.getElementById("theme-toggle");
 const loadDemoBtn = document.getElementById("load-demo");
 const demoToast = document.getElementById("demo-toast");
 
-/** Remember light/dark choice between visits */
 const THEME_STORAGE_KEY = "subsage-theme";
 
-/** Sample rows for the "Load demo data" button (replaces current list) */
 const DEMO_SUBSCRIPTIONS = [
-  { name: "Netflix", cost: 499, usage: "medium" },
-  { name: "Spotify", cost: 199, usage: "high" },
-  { name: "Amazon Prime", cost: 299, usage: "high" },
-  { name: "Hotstar", cost: 149, usage: "low" },
-  { name: "Coursera", cost: 399, usage: "high" },
+  { name: "Netflix", cost: 499, usage: "medium", category: "Entertainment" },
+  { name: "Spotify", cost: 199, usage: "high", category: "Entertainment" },
+  { name: "Amazon Prime", cost: 299, usage: "high", category: "Entertainment" },
+  { name: "Hotstar", cost: 149, usage: "low", category: "Entertainment" },
+  { name: "Coursera", cost: 399, usage: "high", category: "Education" },
 ];
 
-/** Chart.js bar chart: one bar per included subscription, color by usage */
 let costBarChart = null;
 
 const BAR_COLOR = {
@@ -47,18 +44,14 @@ const BAR_COLOR = {
   low: "#dc2626",
 };
 
-/** Line chart: projected balance by year (0–5) from investing monthly waste */
 let futureGainLineChart = null;
 
-/** Subscription currently being edited in the modal (null when closed) */
 let editingSub = null;
 
-/** Format rupees for display */
 function formatMoney(n) {
   return "₹" + Math.round(n).toLocaleString("en-IN");
 }
 
-/** Show when a subscription was last added or edited */
 function formatLastUpdated(isoString) {
   if (!isoString) return "Last updated: —";
   const d = new Date(isoString);
@@ -66,25 +59,18 @@ function formatLastUpdated(isoString) {
   return "Last updated: " + d.toLocaleString();
 }
 
-/** Waste fraction: Not Used = 100%, Occasionally = 50%, Frequently = 0% */
 function wasteFraction(usage) {
   if (usage === "low") return 1;
   if (usage === "medium") return 0.5;
   return 0;
 }
 
-/** Score for health: Frequently=3, Occasionally=2, Not Used=1 */
 function usageScore(usage) {
   if (usage === "high") return 3;
   if (usage === "medium") return 2;
   return 1;
 }
 
-/**
- * Future value of monthly deposits with compound interest.
- * r = yearly rate, monthlyRate = r/12, n = months
- * FV = P * [((1 + monthlyRate)^n - 1) / monthlyRate]
- */
 function futureValueOfMonthlySavings(monthlyPayment, yearlyRate, years) {
   if (monthlyPayment <= 0) return 0;
   const monthlyRate = yearlyRate / 12;
@@ -94,7 +80,6 @@ function futureValueOfMonthlySavings(monthlyPayment, yearlyRate, years) {
   return monthlyPayment * (factor / monthlyRate);
 }
 
-/** Only rows checked (included) count toward totals */
 function activeSubs() {
   return subscriptions.filter((s) => s.included);
 }
@@ -158,7 +143,7 @@ function ensureCostBarChart() {
   });
 }
 
-/** X = subscription names, Y = monthly ₹, colors by usage (included rows only) */
+
 function updateCostBarChart(active) {
   ensureCostBarChart();
   if (!costBarChart) return;
@@ -179,12 +164,6 @@ function updateCostBarChart(active) {
   costBarChart.update();
 }
 
-/**
- * Future gain line chart: one point per year 0…5.
- * Uses the same formula as the big number: each year y is the future value of
- * depositing `wasteMonthly` every month for y years at ANNUAL_RATE (compound).
- * Year 0 = ₹0 (no months invested yet).
- */
 function futureGainPointsByYear(wasteMonthly) {
   const labels = [];
   const data = [];
@@ -255,7 +234,6 @@ function updateFutureGainLineChart(wasteMonthly) {
   futureGainLineChart.update();
 }
 
-/** Match chart text/line colors to light vs dark (body.dark-mode) */
 function applyChartTheme() {
   const dark = document.body.classList.contains("dark-mode");
   const tick = dark ? "#a8a8a8" : "#64748b";
@@ -297,14 +275,13 @@ function updateThemeToggleButton() {
   );
 }
 
-/** Apply theme class + save preference + refresh charts */
 function setDarkMode(on) {
   if (on) document.body.classList.add("dark-mode");
   else document.body.classList.remove("dark-mode");
   try {
     localStorage.setItem(THEME_STORAGE_KEY, on ? "dark" : "light");
   } catch (e) {
-    /* ignore private mode / storage blocked */
+
   }
   updateThemeToggleButton();
   applyChartTheme();
@@ -316,12 +293,11 @@ function loadSavedTheme() {
       document.body.classList.add("dark-mode");
     }
   } catch (e) {
-    /* ignore */
+
   }
   updateThemeToggleButton();
 }
 
-/** Fills app with demo subscriptions and refreshes all UI (clears list first) */
 function loadDemoData() {
   subscriptions.length = 0;
   const now = new Date().toISOString();
@@ -330,6 +306,7 @@ function loadDemoData() {
       name: row.name,
       cost: row.cost,
       usage: row.usage,
+      category: row.category,
       included: true,
       lastUpdated: now,
     });
@@ -364,7 +341,7 @@ function recalculate() {
   totalMonthlyEl.textContent = formatMoney(monthly);
   totalYearlyEl.textContent = formatMoney(yearly);
 
-  // Health: average score 1–3 → percentage of max (3)
+
   let healthPct = 0;
   if (active.length > 0) {
     const avg = scoreSum / active.length;
@@ -373,7 +350,6 @@ function recalculate() {
   healthScoreEl.textContent = Math.round(healthPct) + "%";
   gaugeBar.style.width = healthPct + "%";
 
-  // Insights: negative if any monthly waste, else positive encouragement
   if (wasteMonthly > 0) {
     leakageMsg.textContent =
       "You are wasting " +
@@ -392,11 +368,9 @@ function recalculate() {
     }
   }
 
-  // Future gain from investing monthly waste
   const fv = futureValueOfMonthlySavings(wasteMonthly, ANNUAL_RATE, YEARS);
   futureAmountEl.textContent = formatMoney(fv);
 
-  // Cancel suggestions: low or medium usage, only if included
   cancelList.innerHTML = "";
   let hasSuggestions = false;
   for (const s of active) {
@@ -418,7 +392,6 @@ function recalculate() {
   updateFutureGainLineChart(wasteMonthly);
   applyChartTheme();
 
-  // Light visual cue when dashboard numbers refresh
   pulseValues([
     totalMonthlyEl,
     totalYearlyEl,
@@ -427,7 +400,6 @@ function recalculate() {
   ]);
 }
 
-/** Subtle flash on stat elements after recalculate (CSS transition) */
 function pulseValues(elements) {
   elements.forEach(function (el) {
     if (!el) return;
@@ -449,6 +421,7 @@ function openEditModal(s) {
   editName.value = s.name;
   editCost.value = String(s.cost);
   editUsage.value = s.usage;
+  editCategory.value = s.category || "Others";
   editOverlay.hidden = false;
   editName.focus();
 }
@@ -459,15 +432,12 @@ function closeEditModal() {
   editForm.reset();
 }
 
-/**
- * Apply modal fields to the subscription object, then refresh UI and charts.
- * Using a small form avoids browser issues with chained prompt() dialogs.
- */
 function saveEditFromModal() {
   if (!editingSub) return;
   const name = editName.value.trim();
   const cost = parseFloat(editCost.value);
   const usage = editUsage.value;
+  const category = editCategory.value;
 
   if (!name) {
     alert("Please enter a name.");
@@ -485,6 +455,7 @@ function saveEditFromModal() {
   editingSub.name = name;
   editingSub.cost = cost;
   editingSub.usage = usage;
+  editingSub.category = category;
   editingSub.lastUpdated = new Date().toISOString();
   closeEditModal();
   renderList();
@@ -511,21 +482,24 @@ function usageLabel(usage) {
   return "Not Used";
 }
 
-/** Short insight line per subscription (shown on each card) */
-function usageInsightLine(usage) {
+function usageInsightLine(usage, category = "Others") {
+  const isEducation = category === "Education";
+  
   if (usage === "low") {
-    return "Consider cancelling — you're paying for no usage";
+    return isEducation 
+      ? "Low usage — consider if it aligns with your learning goals"
+      : "Consider cancelling — you're paying for no usage";
   }
   if (usage === "medium") {
-    return "Low usage — evaluate if it's worth the cost";
+    return isEducation 
+      ? "Moderate usage — useful for long-term learning"
+      : "Low usage — evaluate if it's worth the cost";
   }
-  return "Good value — actively used";
+  return isEducation 
+    ? "Great investment in learning"
+    : "Good value — actively used";
 }
 
-/**
- * Subscription Health %: usage 3/2/1 averaged → 0–100, shown as "NN%".
- * Feedback + 🎯 target line + ✅ when waste ≤ ₹200/mo.
- */
 function updateSavingsScore(active, wasteMonthly, scoreSum) {
   const card = document.getElementById("savings-score-card");
   const valEl = document.getElementById("savings-score-value");
@@ -606,6 +580,10 @@ function renderList() {
     pill.className = "usage-pill usage-pill--compact usage-pill--" + s.usage;
     pill.textContent = usageLabel(s.usage);
 
+    const categoryPill = document.createElement("span");
+    categoryPill.className = "category-pill category-pill--compact";
+    categoryPill.textContent = s.category || "Others";
+
     const actions = document.createElement("div");
     actions.className = "sub-card__actions";
 
@@ -634,11 +612,12 @@ function renderList() {
     row.appendChild(nameEl);
     row.appendChild(costEl);
     row.appendChild(pill);
+    row.appendChild(categoryPill);
     row.appendChild(actions);
 
     const insight = document.createElement("p");
     insight.className = "sub-card__insight sub-card__insight--" + s.usage;
-    insight.textContent = usageInsightLine(s.usage);
+    insight.textContent = usageInsightLine(s.usage, s.category);
 
     card.appendChild(row);
     card.appendChild(insight);
@@ -653,19 +632,22 @@ form.addEventListener("submit", (e) => {
   const name = document.getElementById("sub-name").value.trim();
   const cost = parseFloat(document.getElementById("sub-cost").value);
   const usage = document.getElementById("sub-usage").value;
+  const category = document.getElementById("sub-category").value;
 
   if (!name || isNaN(cost) || cost < 0) return;
 
   subscriptions.push({
     name,
     cost,
-    usage, // "high" | "medium" | "low"
+    usage,
+    category,
     included: true,
     lastUpdated: new Date().toISOString(),
   });
 
   form.reset();
   document.getElementById("sub-usage").value = "high";
+  document.getElementById("sub-category").value = "Entertainment";
   renderList();
 });
 
@@ -679,7 +661,6 @@ if (loadDemoBtn) {
   loadDemoBtn.addEventListener("click", loadDemoData);
 }
 
-// Restore theme from localStorage, then paint
 loadSavedTheme();
 renderList();
 applyChartTheme();

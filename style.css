@@ -687,6 +687,25 @@ h3 {
   color: #991b1b;
 }
 
+.category-pill {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0.25rem 0.55rem;
+  border-radius: 999px;
+  background: #e2e8f0;
+  color: #475569;
+}
+
+.category-pill--compact {
+  font-size: 0.58rem;
+  padding: 0.1rem 0.38rem;
+  letter-spacing: 0.03em;
+  flex-shrink: 0;
+}
+
 .sub-card__actions {
   display: flex;
   flex-wrap: nowrap;
@@ -1010,6 +1029,11 @@ body.dark-mode .usage-pill--medium {
 
 body.dark-mode .usage-pill--low {
   color: #fca5a5;
+}
+
+body.dark-mode .category-pill {
+  background: #334155;
+  color: #cbd5e1;
 }
 
 body.dark-mode .savings-score--high .savings-score__value {

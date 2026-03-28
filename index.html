@@ -61,6 +61,15 @@
               <option value="low">Not Used</option>
             </select>
           </label>
+          <label>
+            Category
+            <select id="sub-category" required>
+              <option value="Entertainment">Entertainment</option>
+              <option value="Education">Education</option>
+              <option value="Productivity">Productivity</option>
+              <option value="Others">Others</option>
+            </select>
+          </label>
           <button type="submit">Add Subscription</button>
         </form>
       </section>
@@ -147,7 +156,6 @@
     </div>
   </main>
 
-  <!-- Simple edit form (reliable updates for name, cost, usage) -->
   <div id="edit-overlay" class="edit-overlay" hidden>
     <div class="edit-modal card" role="dialog" aria-labelledby="edit-modal-title" aria-modal="true">
       <h3 id="edit-modal-title">Edit subscription</h3>
@@ -166,6 +174,15 @@
             <option value="high">Frequently</option>
             <option value="medium">Occasionally</option>
             <option value="low">Not Used</option>
+          </select>
+        </label>
+        <label>
+          Category
+          <select id="edit-category" required>
+            <option value="Entertainment">Entertainment</option>
+            <option value="Education">Education</option>
+            <option value="Productivity">Productivity</option>
+            <option value="Others">Others</option>
           </select>
         </label>
         <div class="edit-modal__actions">
