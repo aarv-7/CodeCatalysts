@@ -7,64 +7,107 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <header>
-    <h1>SubSage</h1>
-    <p class="tagline">Track subscriptions · Spot waste · See future savings</p>
+  <header class="app-header">
+    <div class="app-header__inner">
+      <h1>SubSage</h1>
+      <p class="tagline">Track subscriptions · Spot waste · See future savings</p>
+    </div>
   </header>
 
-  <main>
-    <section class="card" id="form-section">
-      <h2>Add subscription</h2>
-      <form id="sub-form">
-        <label>
-          Name
-          <input type="text" id="sub-name" required placeholder="e.g. Netflix" />
-        </label>
-        <label>
-          Cost (₹ / month)
-          <input type="number" id="sub-cost" min="0" step="0.01" required placeholder="499" />
-        </label>
-        <label>
-          Usage
-          <select id="sub-usage" required>
-            <option value="high">Frequently</option>
-            <option value="medium">Occasionally</option>
-            <option value="low">Not Used</option>
-          </select>
-        </label>
-        <button type="submit">Add Subscription</button>
-      </form>
-    </section>
-    <section class="card" id="dashboard">
-      <h2>Dashboard</h2>
-      <p>Total monthly cost: <strong id="total-monthly">₹0</strong></p>
-      <p>Total yearly cost: <strong id="total-yearly">₹0</strong></p>
-      <p>Health score: <strong id="health-score">0%</strong></p>
-      <div class="gauge-wrap">
-        <div class="gauge-bar" id="gauge-bar"></div>
-      </div>
-    </section>
-    <section class="card insights" id="insights">
-      <h2>Insights</h2>
-      <p id="leakage-msg">You are wasting ₹0/month on low-value subscriptions.</p>
-    </section>
-    <section class="card" id="future-gain">
-      <h2>Future gain</h2>
-      <p>
-        If you invest your monthly waste at <strong>10% yearly</strong> for <strong>5 years</strong>:
-      </p>
-      <p class="big-number" id="future-amount">₹0</p>
-    </section>
-    <section class="card" id="list-section">
-      <h2>Your subscriptions</h2>
-      <p class="hint">Uncheck a row to exclude it from all calculations (what-if).</p>
-      <ul id="sub-list"></ul>
-      <div id="empty-msg">No subscriptions yet. Add one above.</div>
-    </section>
-    <section class="card" id="suggestions">
-      <h2>Smart cancel suggestions</h2>
-      <ul id="cancel-list"></ul>
-      <p id="cancel-empty" class="muted">Nothing to suggest — great job using what you pay for.</p>
-    </section>
+  <main class="layout">
+    <div class="layout__left">
+      <section class="card" id="form-section">
+        <h2>Add subscription</h2>
+        <form id="sub-form">
+          <label>
+            Name
+            <input type="text" id="sub-name" required placeholder="e.g. Netflix" />
+          </label>
+          <label>
+            Cost (₹ / month)
+            <input type="number" id="sub-cost" min="0" step="0.01" required placeholder="499" />
+          </label>
+          <label>
+            Usage
+            <select id="sub-usage" required>
+              <option value="high">Frequently</option>
+              <option value="medium">Occasionally</option>
+              <option value="low">Not Used</option>
+            </select>
+          </label>
+          <button type="submit">Add Subscription</button>
+        </form>
+      </section>
+
+      <section class="card insights" id="insights">
+        <h2>Insights</h2>
+        <p id="leakage-msg">You are wasting ₹0/month on low-value subscriptions.</p>
+      </section>
+
+      <section class="card" id="future-gain">
+        <h2>Future gain</h2>
+        <p>
+          If you invest your monthly waste at <strong>10% yearly</strong> for <strong>5 years</strong>:
+        </p>
+        <p class="big-number" id="future-amount">₹0</p>
+        <p class="future-chart-note">
+          Projected balance each year (same monthly waste + compound growth):
+        </p>
+        <div class="chart-panel chart-panel--future">
+          <canvas id="future-line-chart" aria-label="Line chart of projected future gain by year"></canvas>
+        </div>
+      </section>
+    </div>
+
+    <div class="layout__right">
+      <section class="card card--dashboard" id="dashboard">
+        <h2>Dashboard</h2>
+        <div class="stats-row">
+          <div class="stat">
+            <span class="stat__label">Monthly</span>
+            <strong class="stat__value" id="total-monthly">₹0</strong>
+          </div>
+          <div class="stat">
+            <span class="stat__label">Yearly</span>
+            <strong class="stat__value" id="total-yearly">₹0</strong>
+          </div>
+          <div class="stat">
+            <span class="stat__label">Health</span>
+            <strong class="stat__value" id="health-score">0%</strong>
+          </div>
+        </div>
+        <div class="gauge-wrap">
+          <div class="gauge-bar" id="gauge-bar"></div>
+        </div>
+        <h3 class="chart-title">Monthly cost by subscription</h3>
+        <p class="chart-legend">
+          <span class="key key--high">Frequently</span>
+          <span class="key key--mid">Occasionally</span>
+          <span class="key key--low">Not used</span>
+        </p>
+        <div class="chart-panel">
+          <canvas id="cost-bar-chart" aria-label="Bar chart of monthly cost per subscription"></canvas>
+        </div>
+      </section>
+    </div>
+
+    <div class="layout__full">
+      <section class="card" id="list-section">
+        <h2>Your subscriptions</h2>
+        <p class="hint">Uncheck a row to exclude it from all calculations (what-if).</p>
+        <ul id="sub-list"></ul>
+        <div id="empty-msg">No subscriptions yet. Add one above.</div>
+      </section>
+
+      <section class="card" id="suggestions">
+        <h2>Smart cancel suggestions</h2>
+        <ul id="cancel-list"></ul>
+        <p id="cancel-empty" class="muted">Nothing to suggest — great job using what you pay for.</p>
+      </section>
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="script.js"></script>
 </body>
 </html>

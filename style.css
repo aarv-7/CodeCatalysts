@@ -3,48 +3,102 @@
 }
 
 body {
-  font-family: system-ui, -apple-system, sans-serif;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   line-height: 1.5;
-  max-width: 640px;
-  margin: 0 auto;
-  padding: 1rem 1.25rem 2rem;
-  color: #222;
-  background: #f5f5f5;
-}
-
-header {
-  margin-bottom: 1.5rem;
-}
-
-h1 {
   margin: 0;
-  font-size: 1.75rem;
+  min-height: 100vh;
+  color: #1e293b;
+  background: #e8ecf1;
+}
+
+/* Full-width header */
+.app-header {
+  background: #0f172a;
+  color: #f8fafc;
+  padding: 1rem 1rem 1.25rem;
+  margin-bottom: 0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+
+.app-header__inner {
+  width: 100%;
+  padding: 0 0.25rem;
+}
+
+.app-header h1 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
 }
 
 .tagline {
-  margin: 0.25rem 0 0;
-  color: #555;
-  font-size: 0.95rem;
+  margin: 0.2rem 0 0;
+  color: #94a3b8;
+  font-size: 0.875rem;
+}
+
+/* 2-column dashboard: left form+insights, right stats+chart */
+.layout {
+  display: grid;
+  grid-template-columns: minmax(280px, 1fr) minmax(0, 1.45fr);
+  gap: 1rem;
+  align-items: start;
+  width: 100%;
+  margin: 0;
+  padding: 1rem 0.75rem 2rem;
+  box-sizing: border-box;
+}
+
+.layout__left,
+.layout__right {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-width: 0;
+}
+
+.layout__full {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+@media (max-width: 960px) {
+  .layout {
+    grid-template-columns: 1fr;
+    padding: 0.75rem 0.5rem 1.5rem;
+  }
 }
 
 h2 {
   margin: 0 0 0.75rem;
-  font-size: 1.1rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #0f172a;
 }
 
 .card {
   background: #fff;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  padding: 1rem 1.25rem;
-  margin-bottom: 1rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1.1rem 1.25rem;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+}
+
+.card--dashboard {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 
 /* Form */
 #sub-form label {
   display: block;
   margin-bottom: 0.75rem;
-  font-size: 0.9rem;
+  font-size: 0.875rem;
+  color: #475569;
 }
 
 #sub-form input,
@@ -52,81 +106,164 @@ h2 {
   display: block;
   width: 100%;
   margin-top: 0.25rem;
-  padding: 0.5rem;
-  border: 1px solid #ccc;
-  border-radius: 4px;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
   font-size: 1rem;
 }
 
 #sub-form button {
   margin-top: 0.5rem;
-  padding: 0.55rem 1rem;
-  background: #1a5f2a;
+  padding: 0.6rem 1rem;
+  background: #15803d;
   color: #fff;
   border: none;
-  border-radius: 4px;
-  font-size: 1rem;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
   cursor: pointer;
 }
 
 #sub-form button:hover {
-  background: #144a22;
+  background: #166534;
+}
+
+/* Stats row */
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.stat {
+  background: #f1f5f9;
+  border-radius: 8px;
+  padding: 0.6rem 0.75rem;
+}
+
+.stat__label {
+  display: block;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #64748b;
+}
+
+.stat__value {
+  font-size: 1rem;
+  color: #0f172a;
+}
+
+@media (max-width: 520px) {
+  .stats-row {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* Health gauge */
 .gauge-wrap {
-  height: 10px;
-  background: #eee;
-  border-radius: 5px;
+  height: 8px;
+  background: #e2e8f0;
+  border-radius: 4px;
   overflow: hidden;
-  margin-top: 0.5rem;
+  margin-bottom: 0.25rem;
 }
 
 .gauge-bar {
   height: 100%;
   width: 0%;
-  background: #2e7d32;
-  border-radius: 5px;
+  background: #16a34a;
+  border-radius: 4px;
   transition: width 0.2s ease;
 }
 
 .chart-title {
-  margin: 1rem 0 0.5rem;
+  margin: 1rem 0 0.35rem;
   font-size: 0.95rem;
   font-weight: 600;
+  color: #0f172a;
 }
 
-.chart-wrap {
-  max-width: 280px;
-  margin: 0 auto;
+.chart-legend {
+  margin: 0 0 0.75rem;
+  font-size: 0.8rem;
+  color: #64748b;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1rem;
 }
 
-/* Insights — highlight waste in red */
+.key::before {
+  content: "";
+  display: inline-block;
+  width: 0.65rem;
+  height: 0.65rem;
+  border-radius: 2px;
+  margin-right: 0.35rem;
+  vertical-align: middle;
+}
+
+.key--high::before {
+  background: #16a34a;
+}
+
+.key--mid::before {
+  background: #eab308;
+}
+
+.key--low::before {
+  background: #dc2626;
+}
+
+/* Large readable bar chart */
+.chart-panel {
+  position: relative;
+  width: 100%;
+  height: clamp(320px, 42vh, 480px);
+  min-height: 300px;
+}
+
+/* Insights */
 .insights {
-  border-color: #e57373;
-  background: #fff8f8;
+  border-color: #fecaca;
+  background: linear-gradient(180deg, #fff 0%, #fff5f5 100%);
 }
 
 .insights h2 {
-  color: #c62828;
+  color: #b91c1c;
 }
 
 #leakage-msg {
   margin: 0;
-  color: #b71c1c;
+  color: #991b1b;
   font-weight: 600;
+  font-size: 0.95rem;
 }
 
 .big-number {
   font-size: 1.5rem;
   font-weight: 700;
   margin: 0.5rem 0 0;
-  color: #1a5f2a;
+  color: #15803d;
+}
+
+.future-chart-note {
+  margin: 1rem 0 0.5rem;
+  font-size: 0.8rem;
+  color: #64748b;
+}
+
+/* Medium-sized line chart in Future gain (left column) */
+.chart-panel--future {
+  height: 240px;
+  min-height: 200px;
+  margin-top: 0.25rem;
 }
 
 .hint {
   font-size: 0.85rem;
-  color: #666;
+  color: #64748b;
   margin: 0 0 0.75rem;
 }
 
@@ -142,7 +279,7 @@ h2 {
   flex-wrap: wrap;
   gap: 0.5rem 1rem;
   padding: 0.6rem 0;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid #f1f5f9;
   font-size: 0.95rem;
 }
 
@@ -155,17 +292,39 @@ h2 {
   min-width: 140px;
 }
 
-#sub-list button.remove {
+#sub-list .sub-main {
+  font-size: 0.95rem;
+}
+
+#sub-list .sub-updated {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  margin-top: 0.2rem;
+}
+
+#sub-list .sub-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+#sub-list button.remove,
+#sub-list button.edit {
   padding: 0.25rem 0.5rem;
   font-size: 0.8rem;
-  border: 1px solid #ccc;
+  border: 1px solid #cbd5e1;
   background: #fff;
-  border-radius: 4px;
+  border-radius: 6px;
   cursor: pointer;
 }
 
+#sub-list button.edit {
+  border-color: #93c5fd;
+  color: #1d4ed8;
+}
+
 #empty-msg {
-  color: #888;
+  color: #94a3b8;
   font-size: 0.9rem;
 }
 
@@ -177,7 +336,7 @@ h2 {
 
 #cancel-list li {
   padding: 0.4rem 0;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid #f1f5f9;
 }
 
 #cancel-list li:last-child {
@@ -185,7 +344,7 @@ h2 {
 }
 
 .muted {
-  color: #888;
+  color: #94a3b8;
   font-size: 0.9rem;
   margin: 0;
 }
