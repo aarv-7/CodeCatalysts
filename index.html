@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SubSage — Subscription Tracker</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <h1>SubSage</h1>
+    <p class="tagline">Track subscriptions · Spot waste · See future savings</p>
+  </header>
+
+  <main>
+    <section class="card" id="form-section">
+      <h2>Add subscription</h2>
+      <form id="sub-form">
+        <label>
+          Name
+          <input type="text" id="sub-name" required placeholder="e.g. Netflix" />
+        </label>
+        <label>
+          Cost (₹ / month)
+          <input type="number" id="sub-cost" min="0" step="0.01" required placeholder="499" />
+        </label>
+        <label>
+          Usage
+          <select id="sub-usage" required>
+            <option value="high">Frequently</option>
+            <option value="medium">Occasionally</option>
+            <option value="low">Not Used</option>
+          </select>
+        </label>
+        <button type="submit">Add Subscription</button>
+      </form>
+    </section>
