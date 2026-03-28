@@ -11,8 +11,14 @@ const YEARS = 5;
 
 // DOM elements
 const form = document.getElementById("sub-form");
-const subList = document.getElementById("sub-list");
-const emptyMsg = document.getElementById("empty-msg");
+const subListRight = document.getElementById("sub-list-right");
+const emptyMsgRight = document.getElementById("empty-msg-right");
+const editOverlay = document.getElementById("edit-overlay");
+const editForm = document.getElementById("edit-form");
+const editName = document.getElementById("edit-name");
+const editCost = document.getElementById("edit-cost");
+const editUsage = document.getElementById("edit-usage");
+const editCancel = document.getElementById("edit-cancel");
 const totalMonthlyEl = document.getElementById("total-monthly");
 const totalYearlyEl = document.getElementById("total-yearly");
 const healthScoreEl = document.getElementById("health-score");
@@ -33,6 +39,9 @@ const BAR_COLOR = {
 
 /** Line chart: projected balance by year (0–5) from investing monthly waste */
 let futureGainLineChart = null;
+
+/** Subscription currently being edited in the modal (null when closed) */
+let editingSub = null;
 
 /** Format rupees for display */
 function formatMoney(n) {
@@ -290,115 +299,173 @@ function recalculate() {
 
   updateCostBarChart(active);
   updateFutureGainLineChart(wasteMonthly);
+
+  // Light visual cue when dashboard numbers refresh
+  pulseValues([
+    totalMonthlyEl,
+    totalYearlyEl,
+    healthScoreEl,
+    futureAmountEl,
+  ]);
+}
+
+/** Subtle flash on stat elements after recalculate (CSS transition) */
+function pulseValues(elements) {
+  elements.forEach(function (el) {
+    if (!el) return;
+    el.classList.remove("value-flash");
+  });
+  requestAnimationFrame(function () {
+    elements.forEach(function (el) {
+      if (!el) return;
+      el.classList.add("value-flash");
+      window.setTimeout(function () {
+        el.classList.remove("value-flash");
+      }, 350);
+    });
+  });
+}
+
+function openEditModal(s) {
+  editingSub = s;
+  editName.value = s.name;
+  editCost.value = String(s.cost);
+  editUsage.value = s.usage;
+  editOverlay.hidden = false;
+  editName.focus();
+}
+
+function closeEditModal() {
+  editingSub = null;
+  editOverlay.hidden = true;
+  editForm.reset();
 }
 
 /**
- * Edit: prompts for new values, then updates the object and re-renders.
- * Cancel any prompt (Esc) to leave everything unchanged.
+ * Apply modal fields to the subscription object, then refresh UI and charts.
+ * Using a small form avoids browser issues with chained prompt() dialogs.
  */
-function editSubscription(s) {
-  const nameIn = prompt("Subscription name:", s.name);
-  if (nameIn === null) return;
-  const name = nameIn.trim();
+function saveEditFromModal() {
+  if (!editingSub) return;
+  const name = editName.value.trim();
+  const cost = parseFloat(editCost.value);
+  const usage = editUsage.value;
+
   if (!name) {
-    alert("Name cannot be empty.");
+    alert("Please enter a name.");
     return;
   }
-
-  const costIn = prompt("Monthly cost (₹):", String(s.cost));
-  if (costIn === null) return;
-  const cost = parseFloat(costIn);
   if (isNaN(cost) || cost < 0) {
     alert("Please enter a valid cost (0 or more).");
     return;
   }
-
-  const currentChoice =
-    s.usage === "high" ? "1" : s.usage === "medium" ? "2" : "3";
-  const usageIn = prompt(
-    "Usage — enter 1 = Frequently, 2 = Occasionally, 3 = Not used:",
-    currentChoice
-  );
-  if (usageIn === null) return;
-  const u = usageIn.trim();
-  let usage = s.usage;
-  if (u === "1") usage = "high";
-  else if (u === "2") usage = "medium";
-  else if (u === "3") usage = "low";
-  else {
-    alert("Please enter 1, 2, or 3.");
+  if (usage !== "high" && usage !== "medium" && usage !== "low") {
+    alert("Please pick a usage option.");
     return;
   }
 
-  s.name = name;
-  s.cost = cost;
-  s.usage = usage;
-  s.lastUpdated = new Date().toISOString();
+  editingSub.name = name;
+  editingSub.cost = cost;
+  editingSub.usage = usage;
+  editingSub.lastUpdated = new Date().toISOString();
+  closeEditModal();
   renderList();
 }
 
+editForm.addEventListener("submit", function (e) {
+  e.preventDefault();
+  saveEditFromModal();
+});
+
+editCancel.addEventListener("click", closeEditModal);
+
+editOverlay.addEventListener("click", function (e) {
+  if (e.target === editOverlay) closeEditModal();
+});
+
+document.addEventListener("keydown", function (e) {
+  if (e.key === "Escape" && !editOverlay.hidden) closeEditModal();
+});
+
+function usageLabel(usage) {
+  if (usage === "high") return "Frequently";
+  if (usage === "medium") return "Occasionally";
+  return "Not Used";
+}
+
 function renderList() {
-  subList.innerHTML = "";
-  emptyMsg.style.display = subscriptions.length === 0 ? "block" : "none";
+  subListRight.innerHTML = "";
+  const isEmpty = subscriptions.length === 0;
+  emptyMsgRight.style.display = isEmpty ? "block" : "none";
 
   subscriptions.forEach((s) => {
-    const li = document.createElement("li");
+    const card = document.createElement("article");
+    card.className = "sub-card sub-card--" + s.usage;
+    card.setAttribute("role", "listitem");
+
+    const top = document.createElement("div");
+    top.className = "sub-card__top";
 
     const cb = document.createElement("input");
     cb.type = "checkbox";
+    cb.className = "sub-card__check";
     cb.checked = s.included;
     cb.title = "Include in calculations (what-if)";
     cb.setAttribute("aria-label", "Include " + s.name + " in calculations");
-    // Live update when toggled
-    cb.addEventListener("change", () => {
+    cb.addEventListener("change", function () {
       s.included = cb.checked;
       recalculate();
     });
 
-    const meta = document.createElement("div");
-    meta.className = "sub-meta";
-    const main = document.createElement("div");
-    main.className = "sub-main";
-    const label =
-      s.usage === "high"
-        ? "Frequently"
-        : s.usage === "medium"
-          ? "Occasionally"
-          : "Not Used";
-    main.textContent =
-      s.name + " — " + formatMoney(s.cost) + "/mo — " + label;
-    const updated = document.createElement("div");
-    updated.className = "sub-updated";
+    const nameEl = document.createElement("strong");
+    nameEl.className = "sub-card__name";
+    nameEl.textContent = s.name;
+
+    top.appendChild(cb);
+    top.appendChild(nameEl);
+
+    const costEl = document.createElement("p");
+    costEl.className = "sub-card__cost money-display";
+    costEl.textContent = formatMoney(s.cost) + " / month";
+
+    const pill = document.createElement("span");
+    pill.className = "usage-pill usage-pill--" + s.usage;
+    pill.textContent = usageLabel(s.usage);
+
+    const updated = document.createElement("p");
+    updated.className = "sub-card__updated";
     updated.textContent = formatLastUpdated(s.lastUpdated);
-    meta.appendChild(main);
-    meta.appendChild(updated);
 
     const actions = document.createElement("div");
-    actions.className = "sub-actions";
+    actions.className = "sub-card__actions";
 
     const editBtn = document.createElement("button");
     editBtn.type = "button";
-    editBtn.className = "edit";
+    editBtn.className = "btn btn--small btn--edit";
     editBtn.textContent = "Edit";
-    editBtn.addEventListener("click", () => editSubscription(s));
+    editBtn.addEventListener("click", function () {
+      openEditModal(s);
+    });
 
     const removeBtn = document.createElement("button");
     removeBtn.type = "button";
-    removeBtn.className = "remove";
+    removeBtn.className = "btn btn--small btn--ghost";
     removeBtn.textContent = "Remove";
-    removeBtn.addEventListener("click", () => {
+    removeBtn.addEventListener("click", function () {
       const i = subscriptions.indexOf(s);
       if (i !== -1) subscriptions.splice(i, 1);
-      renderList(); // ends with recalculate()
+      renderList();
     });
 
     actions.appendChild(editBtn);
     actions.appendChild(removeBtn);
 
-    li.appendChild(cb);
-    li.appendChild(meta);
-    li.appendChild(actions);
-    subList.appendChild(li);
+    card.appendChild(top);
+    card.appendChild(costEl);
+    card.appendChild(pill);
+    card.appendChild(updated);
+    card.appendChild(actions);
+    subListRight.appendChild(card);
   });
 
   recalculate();
