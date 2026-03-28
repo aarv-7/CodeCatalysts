@@ -13,22 +13,37 @@
         <h1>SubSage</h1>
         <p class="tagline">Track subscriptions · Spot waste · See future savings</p>
       </div>
-      <button
-        type="button"
-        id="theme-toggle"
-        class="theme-toggle"
-        aria-label="Switch to dark mode"
-        title="Toggle light / dark theme"
-      >
-        🌙
-      </button>
+      <div class="app-header__actions">
+        <button
+          type="button"
+          id="load-demo"
+          class="nav-btn nav-btn--demo"
+          aria-label="Load demo subscriptions"
+          title="Load sample data"
+        >
+          ⚡ Demo
+        </button>
+        <button
+          type="button"
+          id="theme-toggle"
+          class="nav-btn nav-btn--theme"
+          aria-label="Switch to dark mode"
+          title="Toggle light / dark theme"
+        >
+          🌙
+        </button>
+      </div>
     </div>
   </header>
+
+  <p id="demo-toast" class="demo-toast demo-toast--global" hidden>
+    Demo data loaded — explore insights
+  </p>
 
   <main class="layout">
     <div class="layout__left">
       <section class="card" id="form-section">
-        <h2 class="card-heading">Add subscription</h2>
+        <h1 class="card-heading">Add subscription</h1>
         <form id="sub-form">
           <label>
             Name
@@ -48,16 +63,10 @@
           </label>
           <button type="submit">Add Subscription</button>
         </form>
-        <button type="button" id="load-demo" class="btn btn--demo">
-          Load demo data
-        </button>
-        <p id="demo-toast" class="demo-toast" hidden>
-          Demo data loaded — explore insights
-        </p>
       </section>
 
       <section class="card insights insights--positive" id="insights">
-        <h2 class="card-heading card-heading--insights">Insights</h2>
+        <h1 class="card-heading card-heading--insights">Insights</h1>
         <p id="leakage-msg" class="leakage-text">
           Great job! You're using your subscriptions efficiently.
         </p>
@@ -107,6 +116,18 @@
         <div class="chart-panel">
           <canvas id="cost-bar-chart" aria-label="Bar chart of monthly cost per subscription"></canvas>
         </div>
+      </section>
+
+      <section class="card card--savings-score savings-score--empty" id="savings-score-card">
+        <h2 class="card-heading">Subscription Health</h2>
+        <div class="savings-score__row">
+          <span class="savings-score__value" id="savings-score-value">—</span>
+        </div>
+        <p class="savings-score__feedback" id="savings-score-feedback">
+          Add included subscriptions to see your score.
+        </p>
+        <p class="health-goal__target" id="health-goal-target"></p>
+        <p class="health-goal__status" id="health-goal-status"></p>
       </section>
 
       <section class="card card--subs-panel" id="subscriptions-panel">

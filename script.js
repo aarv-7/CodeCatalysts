@@ -412,6 +412,8 @@ function recalculate() {
   }
   cancelEmpty.style.display = hasSuggestions ? "none" : "block";
 
+  updateSavingsScore(active, wasteMonthly, scoreSum);
+
   updateCostBarChart(active);
   updateFutureGainLineChart(wasteMonthly);
   applyChartTheme();
@@ -509,6 +511,53 @@ function usageLabel(usage) {
   return "Not Used";
 }
 
+/**
+ * Subscription Health %: usage 3/2/1 averaged → 0–100, shown as "NN%".
+ * Feedback + 🎯 target line + ✅ when waste ≤ ₹200/mo.
+ */
+function updateSavingsScore(active, wasteMonthly, scoreSum) {
+  const card = document.getElementById("savings-score-card");
+  const valEl = document.getElementById("savings-score-value");
+  const fbEl = document.getElementById("savings-score-feedback");
+  const goalTargetEl = document.getElementById("health-goal-target");
+  const goalStatusEl = document.getElementById("health-goal-status");
+  if (!card || !valEl || !fbEl || !goalTargetEl || !goalStatusEl) return;
+
+  card.classList.remove(
+    "savings-score--high",
+    "savings-score--mid",
+    "savings-score--low",
+    "savings-score--empty"
+  );
+
+  if (active.length === 0) {
+    valEl.textContent = "—";
+    fbEl.textContent = "Add included subscriptions to see your health.";
+    goalTargetEl.textContent = "";
+    goalStatusEl.textContent = "";
+    card.classList.add("savings-score--empty");
+    return;
+  }
+
+  const score = Math.round((scoreSum / active.length / 3) * 100);
+  valEl.textContent = score + "%";
+
+  if (score >= 80) {
+    card.classList.add("savings-score--high");
+    fbEl.textContent = "Great financial discipline";
+  } else if (score >= 50) {
+    card.classList.add("savings-score--mid");
+    fbEl.textContent = "Room for optimization";
+  } else {
+    card.classList.add("savings-score--low");
+    fbEl.textContent = "High money leakage detected";
+  }
+
+  goalTargetEl.textContent = "🎯 Target: Reduce waste below ₹200/month";
+  goalStatusEl.textContent =
+    wasteMonthly <= 200 ? "✅ Target achieved" : "";
+}
+
 function renderList() {
   subListRight.innerHTML = "";
   const isEmpty = subscriptions.length === 0;
@@ -519,8 +568,8 @@ function renderList() {
     card.className = "sub-card sub-card--" + s.usage;
     card.setAttribute("role", "listitem");
 
-    const top = document.createElement("div");
-    top.className = "sub-card__top";
+    const row = document.createElement("div");
+    row.className = "sub-card__row";
 
     const cb = document.createElement("input");
     cb.type = "checkbox";
@@ -536,28 +585,22 @@ function renderList() {
     const nameEl = document.createElement("strong");
     nameEl.className = "sub-card__name";
     nameEl.textContent = s.name;
+    nameEl.title = s.name;
 
-    top.appendChild(cb);
-    top.appendChild(nameEl);
-
-    const costEl = document.createElement("p");
+    const costEl = document.createElement("span");
     costEl.className = "sub-card__cost money-display";
-    costEl.textContent = formatMoney(s.cost) + " / month";
+    costEl.textContent = formatMoney(s.cost) + "/mo";
 
     const pill = document.createElement("span");
-    pill.className = "usage-pill usage-pill--" + s.usage;
+    pill.className = "usage-pill usage-pill--compact usage-pill--" + s.usage;
     pill.textContent = usageLabel(s.usage);
-
-    const updated = document.createElement("p");
-    updated.className = "sub-card__updated";
-    updated.textContent = formatLastUpdated(s.lastUpdated);
 
     const actions = document.createElement("div");
     actions.className = "sub-card__actions";
 
     const editBtn = document.createElement("button");
     editBtn.type = "button";
-    editBtn.className = "btn btn--small btn--edit";
+    editBtn.className = "btn btn--small btn--compact btn--edit";
     editBtn.textContent = "Edit";
     editBtn.addEventListener("click", function () {
       openEditModal(s);
@@ -565,7 +608,7 @@ function renderList() {
 
     const removeBtn = document.createElement("button");
     removeBtn.type = "button";
-    removeBtn.className = "btn btn--small btn--ghost";
+    removeBtn.className = "btn btn--small btn--compact btn--ghost";
     removeBtn.textContent = "Remove";
     removeBtn.addEventListener("click", function () {
       const i = subscriptions.indexOf(s);
@@ -576,11 +619,13 @@ function renderList() {
     actions.appendChild(editBtn);
     actions.appendChild(removeBtn);
 
-    card.appendChild(top);
-    card.appendChild(costEl);
-    card.appendChild(pill);
-    card.appendChild(updated);
-    card.appendChild(actions);
+    row.appendChild(cb);
+    row.appendChild(nameEl);
+    row.appendChild(costEl);
+    row.appendChild(pill);
+    row.appendChild(actions);
+
+    card.appendChild(row);
     subListRight.appendChild(card);
   });
 
