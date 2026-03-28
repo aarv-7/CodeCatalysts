@@ -1,9 +1,3 @@
-/**
- * SubSage — subscription tracker
- * Data: array of { name, cost, usage, included, lastUpdated? }
- * usage: "high" (Frequently), "medium" (Occasionally), "low" (Not Used)
- */
-
 const subscriptions = [];
 
 const ANNUAL_RATE = 0.1; // 10% per year
@@ -24,9 +18,25 @@ const totalYearlyEl = document.getElementById("total-yearly");
 const healthScoreEl = document.getElementById("health-score");
 const gaugeBar = document.getElementById("gauge-bar");
 const leakageMsg = document.getElementById("leakage-msg");
+const insightsCard = document.getElementById("insights");
 const futureAmountEl = document.getElementById("future-amount");
 const cancelList = document.getElementById("cancel-list");
 const cancelEmpty = document.getElementById("cancel-empty");
+const themeToggle = document.getElementById("theme-toggle");
+const loadDemoBtn = document.getElementById("load-demo");
+const demoToast = document.getElementById("demo-toast");
+
+/** Remember light/dark choice between visits */
+const THEME_STORAGE_KEY = "subsage-theme";
+
+/** Sample rows for the "Load demo data" button (replaces current list) */
+const DEMO_SUBSCRIPTIONS = [
+  { name: "Netflix", cost: 499, usage: "medium" },
+  { name: "Spotify", cost: 199, usage: "high" },
+  { name: "Amazon Prime", cost: 299, usage: "high" },
+  { name: "Hotstar", cost: 149, usage: "low" },
+  { name: "Coursera", cost: 399, usage: "high" },
+];
 
 /** Chart.js bar chart: one bar per included subscription, color by usage */
 let costBarChart = null;
@@ -245,6 +255,97 @@ function updateFutureGainLineChart(wasteMonthly) {
   futureGainLineChart.update();
 }
 
+/** Match chart text/line colors to light vs dark (body.dark-mode) */
+function applyChartTheme() {
+  const dark = document.body.classList.contains("dark-mode");
+  const tick = dark ? "#a8a8a8" : "#64748b";
+  const titleColor = dark ? "#c4c4c4" : "#475569";
+
+  if (costBarChart) {
+    costBarChart.options.scales.x.ticks.color = tick;
+    costBarChart.options.scales.y.ticks.color = tick;
+    if (costBarChart.options.scales.y.title) {
+      costBarChart.options.scales.y.title.color = titleColor;
+    }
+    costBarChart.update("none");
+  }
+
+  if (futureGainLineChart) {
+    futureGainLineChart.options.scales.x.ticks.color = tick;
+    futureGainLineChart.options.scales.y.ticks.color = tick;
+    if (futureGainLineChart.options.scales.x.title) {
+      futureGainLineChart.options.scales.x.title.color = titleColor;
+    }
+    if (futureGainLineChart.options.scales.y.title) {
+      futureGainLineChart.options.scales.y.title.color = titleColor;
+    }
+    futureGainLineChart.data.datasets[0].borderColor = dark ? "#4ade80" : "#15803d";
+    futureGainLineChart.data.datasets[0].backgroundColor = dark
+      ? "rgba(74, 222, 128, 0.12)"
+      : "rgba(21, 128, 61, 0.12)";
+    futureGainLineChart.update("none");
+  }
+}
+
+function updateThemeToggleButton() {
+  if (!themeToggle) return;
+  const dark = document.body.classList.contains("dark-mode");
+  themeToggle.textContent = dark ? "☀️" : "🌙";
+  themeToggle.setAttribute(
+    "aria-label",
+    dark ? "Switch to light mode" : "Switch to dark mode"
+  );
+}
+
+/** Apply theme class + save preference + refresh charts */
+function setDarkMode(on) {
+  if (on) document.body.classList.add("dark-mode");
+  else document.body.classList.remove("dark-mode");
+  try {
+    localStorage.setItem(THEME_STORAGE_KEY, on ? "dark" : "light");
+  } catch (e) {
+    /* ignore private mode / storage blocked */
+  }
+  updateThemeToggleButton();
+  applyChartTheme();
+}
+
+function loadSavedTheme() {
+  try {
+    if (localStorage.getItem(THEME_STORAGE_KEY) === "dark") {
+      document.body.classList.add("dark-mode");
+    }
+  } catch (e) {
+    /* ignore */
+  }
+  updateThemeToggleButton();
+}
+
+/** Fills app with demo subscriptions and refreshes all UI (clears list first) */
+function loadDemoData() {
+  subscriptions.length = 0;
+  const now = new Date().toISOString();
+  DEMO_SUBSCRIPTIONS.forEach(function (row) {
+    subscriptions.push({
+      name: row.name,
+      cost: row.cost,
+      usage: row.usage,
+      included: true,
+      lastUpdated: now,
+    });
+  });
+  renderList();
+  applyChartTheme();
+
+  if (demoToast) {
+    demoToast.hidden = false;
+    window.clearTimeout(window._subsageDemoToast);
+    window._subsageDemoToast = window.setTimeout(function () {
+      demoToast.hidden = true;
+    }, 4000);
+  }
+}
+
 function recalculate() {
   const active = activeSubs();
 
@@ -272,11 +373,24 @@ function recalculate() {
   healthScoreEl.textContent = Math.round(healthPct) + "%";
   gaugeBar.style.width = healthPct + "%";
 
-  // Leakage message
-  leakageMsg.textContent =
-    "You are wasting " +
-    formatMoney(wasteMonthly) +
-    "/month on low-value subscriptions.";
+  // Insights: negative if any monthly waste, else positive encouragement
+  if (wasteMonthly > 0) {
+    leakageMsg.textContent =
+      "You are wasting " +
+      formatMoney(wasteMonthly) +
+      "/month on low-value subscriptions.";
+    if (insightsCard) {
+      insightsCard.classList.remove("insights--positive");
+      insightsCard.classList.add("insights--negative");
+    }
+  } else {
+    leakageMsg.textContent =
+      "Great job! You're using your subscriptions efficiently.";
+    if (insightsCard) {
+      insightsCard.classList.remove("insights--negative");
+      insightsCard.classList.add("insights--positive");
+    }
+  }
 
   // Future gain from investing monthly waste
   const fv = futureValueOfMonthlySavings(wasteMonthly, ANNUAL_RATE, YEARS);
@@ -290,6 +404,7 @@ function recalculate() {
       hasSuggestions = true;
       const yearlySave = s.cost * 12;
       const li = document.createElement("li");
+      li.className = "suggestion-item";
       li.textContent =
         "Cancel " + s.name + " → save " + formatMoney(yearlySave) + "/year";
       cancelList.appendChild(li);
@@ -299,6 +414,7 @@ function recalculate() {
 
   updateCostBarChart(active);
   updateFutureGainLineChart(wasteMonthly);
+  applyChartTheme();
 
   // Light visual cue when dashboard numbers refresh
   pulseValues([
@@ -492,5 +608,17 @@ form.addEventListener("submit", (e) => {
   renderList();
 });
 
-// First paint
+if (themeToggle) {
+  themeToggle.addEventListener("click", function () {
+    setDarkMode(!document.body.classList.contains("dark-mode"));
+  });
+}
+
+if (loadDemoBtn) {
+  loadDemoBtn.addEventListener("click", loadDemoData);
+}
+
+// Restore theme from localStorage, then paint
+loadSavedTheme();
 renderList();
+applyChartTheme();
