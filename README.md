@@ -1,4 +1,3 @@
-# CodeCatalysts
 # SubSage
 
 SubSage is a smart subscription intelligence system that helps users identify hidden money leakage, evaluate subscription value, and visualize long-term financial gains.
